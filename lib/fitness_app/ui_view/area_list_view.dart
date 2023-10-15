@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:dio/dio.dart';
+import '../appoinments.dart';
 import '../fitness_app_theme.dart';
 import 'package:jinsei/main.dart';
 import 'package:fl_chart/fl_chart.dart';
@@ -40,6 +41,10 @@ class _AreaListViewState extends State<AreaListView>
       AssetImage("assets/icon/oxygen.png"),
       size: 60,
     ),
+    ImageIcon(
+      AssetImage("assets/icon/medical-history.png"),
+      size: 60,
+    )
   ];
   List<String> texts = <String>[
     "Weight",
@@ -47,6 +52,7 @@ class _AreaListViewState extends State<AreaListView>
     "Pulse Rate",
     "Blood Pressure",
     "Oxygen Level",
+    "Prescription History",
   ];
 
   @override
@@ -168,9 +174,12 @@ class AreaView extends StatelessWidget {
                   onTap: () {
                     Navigator.push(
                       context,
-                      MaterialPageRoute(
-                        builder: (context) => Chart(heading: text),
-                      ),
+                      (text != "Prescription History")
+                          ? MaterialPageRoute(
+                              builder: (context) => Chart(heading: text),
+                            )
+                          : MaterialPageRoute(
+                              builder: (context) => AppointmentHistory()),
                     );
                   },
                   child: Column(
@@ -520,6 +529,313 @@ class _ChartState extends State<Chart> {
           ],
         ),
       ),
+    );
+  }
+}
+
+class AppointmentHistory extends StatefulWidget {
+  const AppointmentHistory({super.key});
+
+  @override
+  State<AppointmentHistory> createState() => _AppointmentHistoryState();
+}
+
+class _AppointmentHistoryState extends State<AppointmentHistory> {
+  List<dynamic> appointmentWithPrescriptions = [];
+
+  @override
+  void initState() {
+    super.initState();
+    getCookie();
+    Dio dio = Dio();
+    getCookie().then((cookie) {
+      dio.get(
+        "$url/prescriptionhistory",
+        queryParameters: {
+          'id': cookie['userdata']['id'],
+          'isdoctor': cookie['userdata']['isdoctor'],
+        },
+      ).then((value) {
+        final data = value.data;
+        setState(() {
+          appointmentWithPrescriptions = data['appointments'];
+        });
+      });
+    });
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    if (appointmentWithPrescriptions.isEmpty) {
+      return const CircularProgressIndicator();
+    }
+    return Scaffold(
+      appBar: AppBar(
+        title: Text("Prescription History"),
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0.0,
+        foregroundColor: Colors.black,
+        automaticallyImplyLeading: false,
+      ),
+      body: Container(
+        height: 500,
+        width: double.infinity,
+        child: ListView.builder(
+          itemCount: appointmentWithPrescriptions.length,
+          itemBuilder: (context, index) {
+            return GestureDetector(
+              onTap: () {
+                Dio dio = Dio();
+                dio.get("$url/prescription", queryParameters: {
+                  "appointment": appointmentWithPrescriptions[index]
+                      ['appointmentdetails']['appointment']['id'],
+                }).then((value) {
+                  var prescription = value.data;
+                  getCookie().then((cookie) {
+                    Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => PrescriptionHistory(
+                          prescription: prescription,
+                          cookie: cookie,
+                        ),
+                      ),
+                    );
+                  });
+                });
+              },
+              child: AppointmentTile(
+                  details: appointmentWithPrescriptions[index]
+                      ['appointmentdetails']),
+            );
+          },
+        ),
+      ),
+    );
+  }
+}
+
+class Prescription extends StatelessWidget {
+  Prescription({super.key, required this.details});
+  Map<String, dynamic> details;
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      child: Text(details.toString()),
+    );
+  }
+}
+
+class PrescriptionHistory extends StatelessWidget {
+  PrescriptionHistory(
+      {super.key, required this.prescription, required this.cookie}) {
+    age = DateTime.now().year -
+        DateTime.parse(cookie['userdata']['date_of_birth']).year;
+    if (DateTime.now().month <
+        DateTime.parse(cookie['userdata']['date_of_birth']).month) {
+      age--;
+    }
+  }
+  int age = 0;
+  Map<String, dynamic> cookie;
+
+  Map<String, dynamic> prescription;
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      appBar: AppBar(
+        title: const Text("Prescription"),
+        centerTitle: true,
+        backgroundColor: Colors.transparent,
+        elevation: 0.0,
+        foregroundColor: Colors.black,
+      ),
+      body: ListView(
+        children: [
+          Container(
+            width: double.infinity,
+            height: 200,
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+            color: Colors.white,
+            child: Column(
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Row(
+                    mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                    children: [
+                      Text(
+                        "Name: ${cookie['userdata']['firstname']} ${cookie['userdata']['lastname']}",
+                      ),
+                      Text("Sex: ${sexFullForm(cookie['userdata']['sex'])}"),
+                    ]),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text("Age:  ${age} years"),
+                    Text("Weight: ${prescription["weight"]} KG"),
+                  ],
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text("Temperature: ${prescription['temperature']} °F"),
+                    Text("PR: ${prescription["pulse_rate"]} BPM"),
+                  ],
+                ),
+                Row(
+                  mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                  children: [
+                    Text(
+                      "Blood Pressure: ${prescription['blood_pressure'][0]} / ${prescription['blood_pressure'][1]}",
+                    ),
+                    Text("Sp02: ${prescription['oxygen_level']} %"),
+                  ],
+                ),
+              ],
+            ),
+          ),
+          Container(
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 20),
+            child: Column(
+              children: [
+                const Text("Medications:"),
+                MedicationList(medications: prescription['medication']),
+              ],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+}
+
+class MedicationList extends StatelessWidget {
+  MedicationList({super.key, required this.medications});
+
+  List<dynamic> medications;
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      width: double.infinity,
+      // color: Colors.red,
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          for (int i = 0; i < medications.length; i++)
+            Container(
+              child: Row(
+                mainAxisAlignment: MainAxisAlignment.spaceBetween,
+                children: [
+                  Text("${i + 1}. ${medications[i]['name']}"),
+                  Row(
+                    children: [
+                      IconButton(
+                        icon: const Icon(Icons.timer_outlined),
+                        onPressed: () {
+                          showDialog(
+                            context: context,
+                            builder: (context) {
+                              return AlertDialog(
+                                title: Text(
+                                  '${medications[i]['name']} Schedule',
+                                  textAlign: TextAlign.center,
+                                ),
+                                content: MedicationSchedule(
+                                  schedule: medications[i],
+                                ),
+                                actions: [
+                                  TextButton(
+                                    onPressed: () => Navigator.pop(context),
+                                    child: const Text(
+                                      'Back',
+                                    ),
+                                  ),
+                                ],
+                              );
+                            },
+                          );
+                        },
+                      ),
+                      Text("${medications[i]['days']} Days"),
+                    ],
+                  ),
+                ],
+              ),
+            )
+        ],
+      ),
+    );
+  }
+}
+
+class MedicationSchedule extends StatelessWidget {
+  MedicationSchedule({super.key, required this.schedule}) {
+    if (schedule['mealbased'] is Map) {
+      mealbased = true;
+    } else {
+      mealbased = false;
+    }
+  }
+  dynamic schedule;
+  bool mealbased = true;
+
+  String getMealBasedStatus(bool? time) {
+    if (time == null) {
+      return "Skip";
+    }
+    if (time) {
+      return "After";
+    }
+    return "Before";
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Container(
+      height: 150,
+      padding: EdgeInsets.only(left: mealbased? 30 : 90),
+      child: mealbased
+          ? Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                Text(
+                  "${getMealBasedStatus(schedule['mealbased']['breakfast'])} Breakfast",
+                  style: TextStyle(
+                    fontSize: 18,
+                  ),
+                ),
+                Text(
+                  "${getMealBasedStatus(schedule['mealbased']['lunch'])} Lunch",
+                  style: TextStyle(
+                    fontSize: 18,
+                  ),
+                ),
+                Text(
+                  "${getMealBasedStatus(schedule['mealbased']['dinner'])} Dinner",
+                  style: TextStyle(
+                    fontSize: 18,
+                  ),
+                ),
+              ],
+            )
+          : Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              mainAxisAlignment: MainAxisAlignment.spaceBetween,
+              children: [
+                for (int i = 0; i < schedule['timebased'].length; i++)
+                  Text(
+                    "${schedule['timebased'][i]}",
+                    style: TextStyle(
+                      fontSize: 18,
+                    ),
+                  ),
+              ],
+            ),
     );
   }
 }

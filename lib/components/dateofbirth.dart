@@ -32,6 +32,7 @@ class _DateOfBirthState extends State<DateOfBirth> {
   @override
   Widget build(BuildContext context) {
     return Container(
+      width: double.infinity,
       height: 62,
       decoration: BoxDecoration(
         gradient: const LinearGradient(

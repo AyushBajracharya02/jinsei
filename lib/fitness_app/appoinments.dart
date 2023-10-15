@@ -734,6 +734,8 @@ class _MedicationInputState extends State<MedicationInput> {
   late Iterable<dynamic> sublist;
   List<String> selectedMedication = [];
 
+  PrescriptionController controller = Get.find<PrescriptionController>();
+
   void fetchMedicineList() async {
     Dio dio = Dio();
     final response = await dio.get("$url/medicinelist");
@@ -829,59 +831,46 @@ class _MedicationInputState extends State<MedicationInput> {
                       Text("${i + 1}. ${selectedMedication[i]}"),
                       Row(
                         children: [
-                          Container(
-                            padding: EdgeInsets.all(8),
-                            decoration: BoxDecoration(
-                              gradient: const LinearGradient(
-                                colors: [
-                                  Color.fromARGB(255, 42, 58, 226),
-                                  Color.fromARGB(255, 112, 145, 243)
-                                ],
-                                begin: Alignment.topLeft,
-                                end: Alignment.bottomRight,
-                              ),
-                              borderRadius: BorderRadius.circular(5.0),
-                            ),
-                            child: InkWell(
-                              onTap: () {
-                                showDialog(
-                                  context: context,
-                                  builder: (context) {
-                                    return AlertDialog(
-                                      title: const Text(
-                                        'Set Schedule',
-                                        textAlign: TextAlign.center,
-                                      ),
-                                      content: MedicineScheduleSetter(
-                                        name: selectedMedication[i],
-                                      ),
-                                      actions: [
-                                        TextButton(
-                                          onPressed: () =>
-                                              Navigator.pop(context),
-                                          child: const Text(
-                                            'Back',
-                                          ),
-                                        ),
-                                      ],
-                                    );
-                                  },
-                                );
-                              },
-                              child: Row(
-                                mainAxisAlignment: MainAxisAlignment.center,
-                                children: const [
-                                  Text(
-                                    "Set Schedule",
-                                    style: TextStyle(
-                                      color: Colors.white,
-                                      fontSize: 16,
+                          IconButton(
+                            icon: const Icon(Icons.timer_outlined),
+                            onPressed: () {
+                              showDialog(
+                                context: context,
+                                builder: (context) {
+                                  return AlertDialog(
+                                    title: const Text(
+                                      'Set Schedule',
+                                      textAlign: TextAlign.center,
                                     ),
-                                  ),
-                                ],
-                              ),
-                            ),
+                                    content: MedicineScheduleSetter(
+                                      name: selectedMedication[i],
+                                    ),
+                                    actions: [
+                                      TextButton(
+                                        onPressed: () => Navigator.pop(context),
+                                        child: const Text(
+                                          'Back',
+                                        ),
+                                      ),
+                                    ],
+                                  );
+                                },
+                              );
+                            },
                           ),
+                          SizedBox(
+                            height: 50,
+                            width: 50,
+                            child: TextFormField(onChanged: (value) {
+                              int days = int.parse(value);
+                              Map<String,dynamic> schedule = controller.schedules.firstWhere((element) {
+                                return element['name'] == selectedMedication[i];
+                              });
+                              schedule['days'] = value;
+                              print(controller.schedules);
+                            }),
+                          ),
+                          Text("Days"),
                           IconButton(
                             onPressed: () {
                               setState(() {

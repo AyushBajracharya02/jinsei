@@ -1,15 +1,15 @@
 import 'package:flutter/material.dart';
 
-class BloodGroup extends StatefulWidget {
-  BloodGroup({super.key, required this.controller, this.initialValue});
+class Sex extends StatefulWidget {
+  Sex({super.key, required this.controller, this.initialValue});
   final dynamic controller;
   String? initialValue;
 
   @override
-  State<BloodGroup> createState() => _BloodGroupState();
+  State<Sex> createState() => _SexState();
 }
 
-class _BloodGroupState extends State<BloodGroup> {
+class _SexState extends State<Sex> {
   @override
   void initState() {
     super.initState();
@@ -36,15 +36,15 @@ class _BloodGroupState extends State<BloodGroup> {
         child: Center(
           child: DropdownButtonFormField(
             decoration: const InputDecoration.collapsed(hintText: ''),
-            value: widget.initialValue == "null" ? "A+" : widget.initialValue,
+            value: widget.initialValue ?? "Male",
             onChanged: (value) {
-              widget.controller.setBloodGroup(value);
+              widget.controller.setSex(value);
             },
-            items: ['A+', 'A-', 'B+', 'B-', 'O+', 'O-', 'AB+', 'AB-']
+            items: ['Male', 'Female', 'Other']
                 .map(
-                  (bloodgroup) => DropdownMenuItem(
-                    value: bloodgroup,
-                    child: Text(bloodgroup),
+                  (sex) => DropdownMenuItem(
+                    value: sex,
+                    child: Text(sex),
                   ),
                 )
                 .toList(),

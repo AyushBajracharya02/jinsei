@@ -14,6 +14,7 @@ class EditProfileController extends GetxController {
   var bloodgroup;
   var dateofbirth;
   var price;
+  // var sex;
   Rxn<Map<String, dynamic>> schedule = Rxn({});
   Rxn<Map<String, dynamic>> mealschedule = Rxn({});
 
@@ -29,7 +30,7 @@ class EditProfileController extends GetxController {
     price = '${initialdata['price']}'.obs;
     schedule.value = initialdata['schedule'];
     mealschedule.value = initialdata['mealschedule'];
-    print(mealschedule.value);
+    // sex.value = "${initialdata['sex']}".obs;
     getCookie().then((value) {
       cookie = value;
     });
@@ -59,6 +60,10 @@ class EditProfileController extends GetxController {
 
   void setBloodGroup(String value) {
     bloodgroup.value = value;
+  }
+
+  void setSex(String value) {
+    // sex.value = value;
   }
 
   void setAddress(String value) {
@@ -95,6 +100,7 @@ class EditProfileController extends GetxController {
       "date_of_birth": dateofbirth.value,
       "bloodgroup": bloodgroup.value,
       'mealschedule': mealschedule.value,
+      // "sex": sex.value,
       if (cookie['userdata']['isdoctor']) "price": price.value,
       if (cookie['userdata']['isdoctor']) 'schedule': schedule.value,
     };

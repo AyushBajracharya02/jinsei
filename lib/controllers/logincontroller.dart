@@ -68,7 +68,6 @@ class LoginController extends GetxController {
     );
     Map<String, dynamic> responseData = response.data;
     if (responseData['access']) {
-      print(responseData);
       setCookie(responseData);
       Navigator.push(
         context,

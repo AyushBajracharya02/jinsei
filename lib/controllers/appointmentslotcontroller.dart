@@ -17,13 +17,14 @@ class AppointmentSlotController extends GetxController {
   RxInt doctorId = (-1).obs;
 
   Map<String, dynamic> getData() {
+    print(cookie);
     return {
       "time": selectedtime.value,
       "index": selectedIndex.value,
       "date": DateFormat("yyyy-MM-dd").format(selectedDate.value!),
       "doctorId": doctorId.value,
       "userId": cookie['userdata']['id'],
-      'userphonenumber': cookie['userdata']['phonenumber'],
+      'isdoctor': cookie['userdata']['isdoctor'],
     };
   }
 

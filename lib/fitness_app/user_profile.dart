@@ -12,7 +12,7 @@ import 'package:jinsei/main.dart';
 import 'package:jinsei/components/bloodgroup.dart';
 import 'package:jinsei/components/dateofbirth.dart';
 import 'package:intl/intl.dart';
-
+import 'package:jinsei/components/sex.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 
 Color decideColor(dynamic field) {
@@ -169,9 +169,7 @@ class _UserProfileState extends State<UserProfile> {
           padding: const EdgeInsets.fromLTRB(60, 0, 40, 0),
           decoration: const BoxDecoration(),
           width: double.infinity,
-          child: Column(
-            mainAxisAlignment: MainAxisAlignment.spaceEvenly,
-            crossAxisAlignment: CrossAxisAlignment.start,
+          child: ListView(
             children: [
               Text(
                 'Name : ${cookie['userdata']['isdoctor'] ? "Dr." : ""} ${cookie["userdata"]["firstname"]} ${cookie["userdata"]["lastname"]}',
@@ -225,7 +223,8 @@ class _UserProfileState extends State<UserProfile> {
                 DoctorSchedule(
                   schedule: cookie['userdata']['schedule'],
                 ),
-              if (cookie['userdata']['mealschedule'].isNotEmpty)
+              if (cookie['userdata']['mealschedule'] != null &&
+                  cookie['userdata']['mealschedule'].isNotEmpty)
                 MealSchedule(schedule: cookie['userdata']['mealschedule'])
             ],
           ),
@@ -290,7 +289,9 @@ class MealSchedule extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  schedule['breakfast'],
+                  schedule.containsKey("breakfast")
+                      ? schedule['breakfast']
+                      : "Empty",
                   style: const TextStyle(
                     color: Colors.black,
                     fontSize: 18,
@@ -311,7 +312,7 @@ class MealSchedule extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  schedule['lunch'],
+                  schedule.containsKey("lunch") ? schedule['lunch'] : "Empty",
                   style: const TextStyle(
                     color: Colors.black,
                     fontSize: 18,
@@ -332,7 +333,7 @@ class MealSchedule extends StatelessWidget {
                   ),
                 ),
                 Text(
-                  schedule['dinner'],
+                  schedule.containsKey("dinner") ? schedule['dinner'] : "Empty",
                   style: const TextStyle(
                     color: Colors.black,
                     fontSize: 18,
@@ -406,10 +407,12 @@ class _EditProfileState extends State<EditProfile> {
           Row(
             mainAxisAlignment: MainAxisAlignment.spaceEvenly,
             children: [
-              DateOfBirth(
-                controller: controller,
-                initialValue: cookie['userdata']['date_of_birth'],
-              ),
+              // Expanded(
+              //   child: Sex(
+              //     controller: controller,
+              //     initialValue: cookie['userdata']['sex'],
+              //   ),
+              // ),
               const SizedBox(
                 width: 10,
               ),
@@ -420,6 +423,11 @@ class _EditProfileState extends State<EditProfile> {
                 ),
               ),
             ],
+          ),
+          const SizedBox(height: 10),
+          DateOfBirth(
+            controller: controller,
+            initialValue: cookie['userdata']['date_of_birth'],
           ),
           const SizedBox(height: 10),
           Address(
@@ -475,7 +483,6 @@ class _EditProfileState extends State<EditProfile> {
                   if (responseData['status']) {
                     Map<String, dynamic> userdata = cookie['userdata'];
                     userdata = {...userdata, ...controller.getData()};
-                    print({...cookie, 'userdata': userdata});
                     setCookie({...cookie, 'userdata': userdata});
                     getCookie().then((value) {
                       setState(() {
@@ -501,7 +508,7 @@ class _EditProfileState extends State<EditProfile> {
 }
 
 class MealScheduleEditor extends StatefulWidget {
-  Map<String, dynamic> schedule;
+  Map<String, dynamic>? schedule;
   final EditProfileController controller;
   MealScheduleEditor({
     super.key,
@@ -577,7 +584,11 @@ class _MealScheduleEditorState extends State<MealScheduleEditor> {
                     });
                   },
                   child: Text(
-                    widget.controller.mealschedule.value!['breakfast'],
+                    widget.controller.mealschedule.value != null &&
+                            widget.controller.mealschedule.value!
+                                .containsKey("breakfast")
+                        ? widget.controller.mealschedule.value!['breakfast']
+                        : "Add",
                     style: const TextStyle(
                       color: Colors.black,
                       fontSize: 18,
@@ -612,7 +623,11 @@ class _MealScheduleEditorState extends State<MealScheduleEditor> {
                     });
                   },
                   child: Text(
-                    widget.controller.mealschedule.value!['lunch'],
+                    widget.controller.mealschedule.value != null &&
+                            widget.controller.mealschedule.value!
+                                .containsKey("lunch")
+                        ? widget.controller.mealschedule.value!['lunch']
+                        : "Add",
                     style: const TextStyle(
                       color: Colors.black,
                       fontSize: 18,
@@ -647,7 +662,11 @@ class _MealScheduleEditorState extends State<MealScheduleEditor> {
                     });
                   },
                   child: Text(
-                    widget.controller.mealschedule.value!['dinner'],
+                    widget.controller.mealschedule.value != null &&
+                            widget.controller.mealschedule.value!
+                                .containsKey("dinner")
+                        ? widget.controller.mealschedule.value!['dinner']
+                        : "Add",
                     style: const TextStyle(
                       color: Colors.black,
                       fontSize: 18,

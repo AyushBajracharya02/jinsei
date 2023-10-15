@@ -36,7 +36,7 @@ void main(List<String> args) async {
     ),
   );
   final int helloAlarmID = 0;
-  await AndroidAlarmManager.periodic(const Duration(minutes: 1), helloAlarmID, printHello);
+  // await AndroidAlarmManager.periodic(const Duration(minutes: 1), helloAlarmID, printHello);
 }
 
 class HexColor extends Color {
